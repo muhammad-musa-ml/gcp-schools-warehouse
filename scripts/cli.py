@@ -208,6 +208,9 @@ COMMANDS = {
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    # Keep our own lines in order with the output of terraform and dataform when piped to a file.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
     try:
         if args.command == "ingest" and args.no_upload:
             settings = Settings(project_id="not-used")

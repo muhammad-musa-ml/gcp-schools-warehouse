@@ -21,4 +21,4 @@ terraform/tfplan
 dataform/node_modules/
 dataform/.df-credentials.json
 
-results/*.tmp
+results/report.md
