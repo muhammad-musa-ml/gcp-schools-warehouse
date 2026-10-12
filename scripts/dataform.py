@@ -17,22 +17,29 @@ def project_vars(stack: Stack) -> dict[str, str]:
     }
 
 
-def command(action: str, stack: Stack, *, extra: list[str] | None = None) -> list[str]:
-    """argv for `dataform compile` or `dataform run` with this stack's names injected."""
+def command(action: str, stack: Stack | None, *, extra: list[str] | None = None) -> list[str]:
+    """argv for `dataform compile` or `dataform run`; with a stack its names are injected.
+
+    Without a stack the project compiles with the placeholders from workflow_settings.yaml,
+    which is enough to look at the graph.
+    """
     if action not in ("compile", "run"):
         raise ValueError(f"unsupported dataform action {action!r}")
+    if action == "run" and stack is None:
+        raise ValueError("a run needs the terraform stack")
     npx = shutil.which("npx")
     if not npx:
         raise ConfigError("npx not found; install Node.js 18 or newer")
-    vars_arg = ",".join(f"{k}={v}" for k, v in project_vars(stack).items())
-    argv = [
-        npx, "--yes", DATAFORM_CLI, action, str(DATAFORM_DIR),
-        "--default-database", stack.project_id,
-        "--default-location", stack.location,
-        "--assertion-schema", stack.assertions_dataset,
-        "--default-schema", stack.warehouse_dataset,
-        f"--vars={vars_arg}",
-    ]  # fmt: skip
+    argv = [npx, "--yes", DATAFORM_CLI, action, str(DATAFORM_DIR)]
+    if stack is not None:
+        vars_arg = ",".join(f"{k}={v}" for k, v in project_vars(stack).items())
+        argv += [
+            "--default-database", stack.project_id,
+            "--default-location", stack.location,
+            "--assertion-schema", stack.assertions_dataset,
+            "--default-schema", stack.warehouse_dataset,
+            f"--vars={vars_arg}",
+        ]  # fmt: skip
     if action == "run":
         argv += ["--credentials", str(credentials_file(stack))]
     return argv + (extra or [])

@@ -29,6 +29,8 @@ python -m scripts all
 clean, upload the Parquet), `transform` (Dataform run, assertions included), `queries`
 and `report`. Each step is also a command of its own, see `python -m scripts --help`.
 The AI.CLASSIFY query costs a little per row and is left out unless you pass `--include-ai`.
+`python -m scripts graph` prints which Dataform action depends on which and needs no cloud
+access.
 
 The account running it needs to be able to enable APIs, create buckets and datasets and
 grant a project role; Owner on a scratch project is the easy way.

@@ -11,7 +11,7 @@ from google.cloud import bigquery
 
 from ingest import gcs, pipeline
 
-from . import bench, dataform, queries, report, terraform
+from . import bench, dataform, graph, queries, report, terraform
 from .config import (
     AI_ENDPOINT,
     DATA_DIR,
@@ -51,6 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--reps", type=int, default=5)
     s.add_argument("--out", type=Path, default=RESULTS_DIR, help="directory for the CSV files")
 
+    sub.add_parser("graph", help="print which Dataform action depends on which (needs no cloud)")
     sub.add_parser("report", help="print table sizes, last query results and bytes billed")
     sub.add_parser("status", help="show what exists in the project")
 
@@ -127,6 +128,10 @@ def cmd_queries(settings: Settings, args) -> None:
         report.save_query_run(spec.name, spec.title, rows, asdict(stats))
 
 
+def cmd_graph(settings: Settings, args) -> None:
+    print(json.dumps(graph.dependency_graph(graph.compile_json()), indent=2))
+
+
 def cmd_bench(settings: Settings, args) -> None:
     if args.reps < 1:
         raise ConfigError("--reps must be at least 1")
@@ -199,6 +204,7 @@ COMMANDS = {
     "transform": cmd_transform,
     "queries": cmd_queries,
     "bench": cmd_bench,
+    "graph": cmd_graph,
     "report": cmd_report,
     "status": cmd_status,
     "all": cmd_all,
@@ -212,7 +218,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(line_buffering=True)
     try:
-        if args.command == "ingest" and args.no_upload:
+        if args.command == "graph" or (args.command == "ingest" and args.no_upload):
             settings = Settings(project_id="not-used")
         else:
             settings = load_settings()
