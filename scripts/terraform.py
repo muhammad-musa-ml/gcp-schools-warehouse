@@ -60,7 +60,7 @@ def command(
             "run gcloud auth application-default login"
         )
     return [
-        "docker", "run", "--rm", "-i",
+        "docker", "run", "--rm", "-i", "--memory", "1g",
         "-v", f"{tf_dir}:/work",
         "-w", "/work",
         "-v", f"{adc}:/run/adc.json:ro",
