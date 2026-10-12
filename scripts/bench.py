@@ -1,5 +1,6 @@
 import csv
 import json
+import os
 import platform
 import statistics
 import subprocess
@@ -46,7 +47,10 @@ def _spread(
     vals = [v for v in values if v is not None]
     if not vals:
         return None, None, None
-    return statistics.median(vals), min(vals), max(vals)
+    med = statistics.median(vals)
+    if all(isinstance(v, int) for v in vals) and med == int(med):
+        med = int(med)
+    return round(med, 4), min(vals), max(vals)
 
 
 def summarize(runs: list[RunStats]) -> list[dict]:
@@ -120,11 +124,21 @@ def environment(stack: Stack, reps: int, endpoint: str) -> dict:
         commit = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True, check=True
         ).stdout.strip()
+        dirty = bool(
+            subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=REPO,
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout.strip()
+        )
     except (OSError, subprocess.CalledProcessError):
-        commit = None
+        commit, dirty = None, None
     return {
         "date_utc": datetime.now(UTC).isoformat(timespec="seconds"),
         "git_commit": commit,
+        "git_dirty": dirty,
         "bigquery_location": stack.location,
         "reps_per_query": reps,
         "query_cache": "disabled",
@@ -132,6 +146,7 @@ def environment(stack: Stack, reps: int, endpoint: str) -> dict:
         "client": f"google-cloud-bigquery {metadata.version('google-cloud-bigquery')}",
         "python": platform.python_version(),
         "os": f"{platform.system()} {platform.release()} {platform.machine()}",
+        "cpus": os.cpu_count(),
         "note": (
             "wall_s is measured on the client around job submit and result fetch, so it "
             "includes the network path from this machine; server_s is the job's own start to end."

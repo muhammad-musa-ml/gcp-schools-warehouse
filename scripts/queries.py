@@ -137,7 +137,7 @@ def run(
     stats = RunStats(
         query=spec.name,
         rep=rep,
-        wall_s=wall,
+        wall_s=round(wall, 4),
         server_s=server,
         bytes_processed=job.total_bytes_processed,
         bytes_billed=job.total_bytes_billed,
