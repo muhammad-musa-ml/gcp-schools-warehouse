@@ -152,7 +152,7 @@ def environment(stack: Stack, reps: int, endpoint: str) -> dict:
         ).stdout.strip()
         dirty = bool(
             subprocess.run(
-                ["git", "status", "--porcelain"],
+                ["git", "status", "--porcelain", "--", ".", ":(exclude)results"],
                 cwd=REPO,
                 capture_output=True,
                 text=True,
