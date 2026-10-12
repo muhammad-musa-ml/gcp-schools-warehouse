@@ -5,13 +5,14 @@ import subprocess
 import sys
 from collections.abc import Sequence
 from dataclasses import asdict
+from datetime import UTC, datetime
 from pathlib import Path
 
 from google.cloud import bigquery
 
 from ingest import gcs, pipeline
 
-from . import bench, dataform, graph, queries, report, terraform
+from . import bench, dataform, facts, graph, queries, report, stages, summary, terraform
 from .config import (
     AI_ENDPOINT,
     DATA_DIR,
@@ -50,6 +51,17 @@ def build_parser() -> argparse.ArgumentParser:
     _query_args(s)
     s.add_argument("--reps", type=int, default=5)
     s.add_argument("--out", type=Path, default=RESULTS_DIR, help="directory for the CSV files")
+
+    s = sub.add_parser("stages", help="time ingest, transform and all as separate processes")
+    s.add_argument("--reps", type=int, default=3)
+    s.add_argument("--only", nargs="+", choices=list(stages.STAGES), help="time only these")
+    s.add_argument("--out", type=Path, default=RESULTS_DIR, help="directory for the CSV files")
+
+    s = sub.add_parser("facts", help="read row counts, join results and assertions from BigQuery")
+    s.add_argument("--out", type=Path, default=RESULTS_DIR, help="directory for data_facts.json")
+
+    s = sub.add_parser("summary", help="write summary.md from the files in results/ (no cloud)")
+    s.add_argument("--results", type=Path, default=RESULTS_DIR)
 
     sub.add_parser("graph", help="print which Dataform action depends on which (needs no cloud)")
     sub.add_parser("report", help="print table sizes, last query results and bytes billed")
@@ -95,6 +107,9 @@ def cmd_ingest(settings: Settings, args) -> None:
         f"kept {summary.rows_kept}, rejected {summary.rows_rejected}"
     )
     print(f"parquet {summary.parquet_path} ({summary.parquet_bytes} bytes)")
+    facts.INGEST_SUMMARY.write_text(
+        json.dumps(summary.as_dict(), indent=2) + "\n", encoding="utf-8"
+    )
     if summary.uploaded:
         u = summary.uploaded
         print(f"uploaded gs://{u.path}: size {u.size} bytes, modified {u.mtime_ns} ns")
@@ -138,14 +153,43 @@ def cmd_bench(settings: Settings, args) -> None:
     stack = terraform.load_stack(settings)
     client = _client(stack)
     specs = queries.select(queries.load_manifest(), args.name, args.include_ai)
-    runs = bench.run_all(client, stack, specs, reps=args.reps, endpoint=args.endpoint)
+    result = bench.run_all(client, stack, specs, reps=args.reps, endpoint=args.endpoint)
     out = args.out
     env = bench.environment(stack, args.reps, args.endpoint)
     bench.write_results(
-        out, runs, bench.table_stats(client, stack), env, bench.project_usage(client, stack)
+        out, result, bench.table_stats(client, stack), env, bench.project_usage(client, stack)
     )
-    cost = bench.estimate_cost(runs)
+    cost = bench.estimate_cost(result.runs)
     print(f"wrote {out}; {cost['bytes_billed_total']} bytes billed over {cost['runs']} runs")
+
+
+def cmd_stages(settings: Settings, args) -> None:
+    if args.reps < 1:
+        raise ConfigError("--reps must be at least 1")
+    started = datetime.now(UTC).isoformat(timespec="seconds")
+    runs = stages.run_all(args.reps, args.only)
+    stages.write_results(
+        args.out,
+        runs,
+        stages.dataform_actions(runs),
+        stages.describe_environment(args.reps, started),
+    )
+    print(report.format_table(stages.summarize(runs), 10))
+
+
+def cmd_facts(settings: Settings, args) -> None:
+    stack = terraform.load_stack(settings)
+    data = facts.collect(_client(stack), stack, facts.load_ingest_summary())
+    args.out.mkdir(parents=True, exist_ok=True)
+    (args.out / "data_facts.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(data["county_join"], indent=2))
+    print(report.format_table(data["assertions"], 20))
+
+
+def cmd_summary(settings: Settings, args) -> None:
+    text = summary.build(args.results)
+    (args.results / "summary.md").write_text(text, encoding="utf-8")
+    print(text)
 
 
 def cmd_report(settings: Settings, args) -> None:
@@ -205,6 +249,9 @@ COMMANDS = {
     "queries": cmd_queries,
     "bench": cmd_bench,
     "graph": cmd_graph,
+    "stages": cmd_stages,
+    "facts": cmd_facts,
+    "summary": cmd_summary,
     "report": cmd_report,
     "status": cmd_status,
     "all": cmd_all,
@@ -218,7 +265,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(line_buffering=True)
     try:
-        if args.command == "graph" or (args.command == "ingest" and args.no_upload):
+        if args.command in ("graph", "summary") or (args.command == "ingest" and args.no_upload):
             settings = Settings(project_id="not-used")
         else:
             settings = load_settings()

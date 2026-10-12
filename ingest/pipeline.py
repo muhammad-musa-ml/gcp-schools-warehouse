@@ -22,6 +22,10 @@ class IngestSummary:
         return asdict(self)
 
 
+def cached_zip(data_dir: Path, year_code: str) -> Path:
+    return data_dir / f"edge_publicsch_{year_code}.zip"
+
+
 def run(
     *,
     year_code: str,
@@ -31,7 +35,7 @@ def run(
     refresh: bool = False,
 ) -> IngestSummary:
     url = fetch.source_url(year_code)
-    zip_path = fetch.download(url, data_dir / f"edge_publicsch_{year_code}.zip", refresh=refresh)
+    zip_path = fetch.download(url, cached_zip(data_dir, year_code), refresh=refresh)
 
     with fetch.open_text_member(zip_path) as text:
         result = clean.clean_rows(clean.read_rows(text))

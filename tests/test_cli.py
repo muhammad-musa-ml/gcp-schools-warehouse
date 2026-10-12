@@ -1,4 +1,5 @@
 import io
+import json
 import os
 import subprocess
 
@@ -14,6 +15,11 @@ STACK = Stack("p-12345", "US", "b", "raw", "wh", "asrt", "p-12345.US.c")
 def restore_quota_project(monkeypatch):
     # main() sets this variable; setting it here first makes monkeypatch undo whatever main does
     monkeypatch.setenv("GOOGLE_CLOUD_QUOTA_PROJECT", "set-by-the-test-fixture")
+
+
+@pytest.fixture(autouse=True)
+def keep_real_ingest_summary(monkeypatch, tmp_path):
+    monkeypatch.setattr(cli.facts, "INGEST_SUMMARY", tmp_path / "ingest_summary.json")
 
 
 @pytest.fixture
@@ -154,3 +160,33 @@ def test_quota_project_is_pointed_at_the_target_project(configured, monkeypatch)
     monkeypatch.setattr(cli.dataform, "run", lambda *a, **k: None)
     cli.main(["transform", "--compile-only"])
     assert os.environ["GOOGLE_CLOUD_QUOTA_PROJECT"] == "p-12345"
+
+
+def test_stages_rejects_zero_reps_and_unknown_stage(configured, capsys):
+    assert cli.main(["stages", "--reps", "0"]) == 2
+    assert "--reps" in capsys.readouterr().err
+    with pytest.raises(SystemExit) as e:
+        cli.build_parser().parse_args(["stages", "--only", "deploy"])
+    assert e.value.code == 2
+    capsys.readouterr()
+
+
+def test_ingest_leaves_a_summary_for_the_facts_step(configured, monkeypatch):
+    monkeypatch.setattr(
+        cli.pipeline,
+        "run",
+        lambda **kw: cli.pipeline.IngestSummary("url", "a" * 64, 10, 8, 2, 0, "x", 5, None),
+    )
+    assert cli.main(["ingest"]) == 0
+    saved = json.loads(cli.facts.INGEST_SUMMARY.read_text(encoding="utf-8"))
+    assert saved["rows_kept"] == 2
+
+
+def test_summary_command_needs_no_project(monkeypatch, tmp_path, capsys):
+    def no_settings():
+        raise ConfigError("should not be asked")
+
+    monkeypatch.setattr(cli, "load_settings", no_settings)
+    monkeypatch.setattr(cli.summary, "build", lambda results: "# text\n")
+    assert cli.main(["summary", "--results", str(tmp_path)]) == 0
+    assert (tmp_path / "summary.md").read_text(encoding="utf-8") == "# text\n"

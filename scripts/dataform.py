@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -59,3 +60,35 @@ def credentials_file(stack: Stack) -> Path:
 def run(action: str, stack: Stack, *, extra: list[str] | None = None) -> None:
     env = {**os.environ, "GOOGLE_CLOUD_QUOTA_PROJECT": stack.project_id}
     subprocess.run(command(action, stack, extra=extra), cwd=REPO, env=env, check=True)
+
+
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+_ACTION = re.compile(
+    r"^(Table created|Operation completed successfully|Assertion passed|Assertion failed)"
+    r":\s+(\S+)"
+)
+_UNITS = {"B": 1, "KiB": 2**10, "MiB": 2**20, "GiB": 2**30, "TiB": 2**40}
+
+
+def _to_bytes(text: str) -> int:
+    total = 0
+    for amount, unit in re.findall(r"([\d.]+) (B|KiB|MiB|GiB|TiB)", text):
+        total += round(float(amount) * _UNITS[unit])
+    return total
+
+
+def parse_run_log(text: str) -> list[dict]:
+    """Actions from the output of `dataform run`: name, status and bytes billed.
+
+    The CLI prints sizes rounded to two decimals and lists several jobs per assertion,
+    so the byte counts here are sums of those printed figures.
+    """
+    actions = []
+    for line in _ANSI.sub("", text).splitlines():
+        m = _ACTION.match(line.strip())
+        if m:
+            status = "failed" if m.group(1) == "Assertion failed" else "ok"
+            actions.append({"action": m.group(2), "status": status, "bytes_billed": 0})
+        elif "Bytes billed:" in line and actions:
+            actions[-1]["bytes_billed"] = _to_bytes(line.split("Bytes billed:")[1])
+    return actions

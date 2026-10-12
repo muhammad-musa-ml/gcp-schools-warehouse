@@ -1,22 +1,26 @@
 import csv
 import json
-import os
-import platform
 import statistics
 import subprocess
 from collections.abc import Iterable
-from dataclasses import asdict, fields
+from dataclasses import asdict, dataclass, fields
 from datetime import UTC, datetime
 from importlib import metadata
 from pathlib import Path
 
 from google.cloud import bigquery
 
-from . import queries
+from . import machine, queries
 from .config import AI_ENDPOINT, BQ_USD_PER_TIB, REPO, Stack
 from .queries import QuerySpec, RunStats
 
 TIB = 2**40
+
+
+@dataclass
+class BenchResult:
+    runs: list[RunStats]
+    ai_rows: dict[str, list[list[dict]]]  # query name -> rows of each repetition
 
 
 def run_all(
@@ -27,18 +31,40 @@ def run_all(
     reps: int,
     endpoint: str = AI_ENDPOINT,
     log=print,
-) -> list[RunStats]:
+) -> BenchResult:
     """Every query reps times, query cache off, so each run does the real work."""
-    runs = []
+    result = BenchResult([], {})
     for spec in specs:
         for rep in range(1, reps + 1):
-            _, stats = queries.run(client, spec, stack, rep=rep, use_cache=False, endpoint=endpoint)
-            runs.append(stats)
+            rows, stats = queries.run(
+                client, spec, stack, rep=rep, use_cache=False, endpoint=endpoint
+            )
+            result.runs.append(stats)
+            if spec.ai:
+                result.ai_rows.setdefault(spec.name, []).append(rows)
             log(
                 f"{spec.name} rep {rep}/{reps}: {stats.wall_s:.2f}s wall, "
                 f"{stats.slot_ms} slot-ms, {stats.bytes_billed} bytes billed"
             )
-    return runs
+    return result
+
+
+def ai_labels(reps_rows: list[list[dict]]) -> list[dict]:
+    """One row per school with the label from each repetition and whether they all agree."""
+    by_school: dict[str, dict] = {}
+    for rep, rows in enumerate(reps_rows, start=1):
+        for row in rows:
+            entry = by_school.setdefault(
+                row["school_name"],
+                {"school_name": row["school_name"], "bare_name": row["bare_name"]},
+            )
+            entry[f"rep{rep}"] = row["name_origin"]
+    out = []
+    for entry in by_school.values():
+        labels = [entry.get(f"rep{i}") for i in range(1, len(reps_rows) + 1)]
+        entry["distinct_labels"] = len(set(labels))
+        out.append(entry)
+    return sorted(out, key=lambda e: e["school_name"])
 
 
 def _spread(
@@ -144,9 +170,7 @@ def environment(stack: Stack, reps: int, endpoint: str) -> dict:
         "query_cache": "disabled",
         "ai_endpoint": endpoint,
         "client": f"google-cloud-bigquery {metadata.version('google-cloud-bigquery')}",
-        "python": platform.python_version(),
-        "os": f"{platform.system()} {platform.release()} {platform.machine()}",
-        "cpus": os.cpu_count(),
+        "machine": machine.describe(),
         "note": (
             "wall_s is measured on the client around job submit and result fetch, so it "
             "includes the network path from this machine; server_s is the job's own start to end."
@@ -163,11 +187,24 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
 
 
 def write_results(
-    out_dir: Path, runs: list[RunStats], tables: list[dict], env: dict, usage: dict | None
+    out_dir: Path,
+    result: BenchResult,
+    tables: list[dict],
+    env: dict,
+    usage: dict | None,
 ) -> None:
+    runs = result.runs
     run_fields = [f.name for f in fields(RunStats)]
     _write_csv(out_dir / "query_runs.csv", [{k: asdict(r)[k] for k in run_fields} for r in runs])
     _write_csv(out_dir / "query_summary.csv", summarize(runs))
     _write_csv(out_dir / "table_rows.csv", tables)
     report = {"environment": env, "cost_estimate": estimate_cost(runs), "project_usage": usage}
+    for name, reps_rows in result.ai_rows.items():
+        labels = ai_labels(reps_rows)
+        _write_csv(out_dir / f"{name}_labels.csv", labels)
+        report.setdefault("ai_label_stability", {})[name] = {
+            "schools": len(labels),
+            "same_label_in_every_rep": sum(1 for e in labels if e["distinct_labels"] == 1),
+            "repetitions": len(reps_rows),
+        }
     (out_dir / "run_info.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

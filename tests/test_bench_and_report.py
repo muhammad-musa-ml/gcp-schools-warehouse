@@ -56,8 +56,10 @@ def test_run_all_repeats_each_query_with_the_cache_off(monkeypatch):
 
     monkeypatch.setattr(queries, "run", fake_run)
     specs = queries.select(queries.load_manifest(), ["schools_per_county", "school_density"], False)
-    runs = bench.run_all(None, STACK, specs, reps=5, endpoint="m", log=lambda *_: None)
+    result = bench.run_all(None, STACK, specs, reps=5, endpoint="m", log=lambda *_: None)
+    runs = result.runs
     assert len(runs) == 10
+    assert result.ai_rows == {}
     assert {c[2] for c in calls} == {False}
     assert [c[1] for c in calls if c[0] == "school_density"] == [1, 2, 3, 4, 5]
 
@@ -65,7 +67,9 @@ def test_run_all_repeats_each_query_with_the_cache_off(monkeypatch):
 def test_write_results_creates_the_csv_files(tmp_path):
     tables = [{"table": "raw.schools", "rows": 5, "bytes": 99}]
     env = {"reps_per_query": 3}
-    bench.write_results(tmp_path / "out", RUNS, tables, env, {"query_jobs": 1})
+    bench.write_results(
+        tmp_path / "out", bench.BenchResult(RUNS, {}), tables, env, {"query_jobs": 1}
+    )
     out = tmp_path / "out"
     with open(out / "query_runs.csv", newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
@@ -110,3 +114,38 @@ def test_markdown_includes_saved_query_runs(monkeypatch, tmp_path):
     assert "### q1: Title one" in text
     assert "1.0 MiB" in text
     assert "raw.schools" in text
+
+
+def test_ai_rows_are_kept_and_compared_across_repetitions(monkeypatch, tmp_path):
+    labels = iter(["Person", "Person", "Place", "Person"])
+
+    def fake_run(client, spec, stack, *, rep, use_cache, endpoint):
+        rows = [
+            {
+                "school_name": "Lincoln Elementary",
+                "bare_name": "Lincoln",
+                "name_origin": next(labels),
+            },
+            {"school_name": "Muir Elementary", "bare_name": "Muir", "name_origin": next(labels)},
+        ]
+        return rows, stat(spec.name, rep, 0.1, 1, 1)
+
+    monkeypatch.setattr(queries, "run", fake_run)
+    specs = queries.select(queries.load_manifest(), ["classify_name_origin"], True)
+    result = bench.run_all(None, STACK, specs, reps=2, log=lambda *_: None)
+    assert len(result.ai_rows["classify_name_origin"]) == 2
+
+    table = bench.ai_labels(result.ai_rows["classify_name_origin"])
+    assert [(r["school_name"], r["rep1"], r["rep2"], r["distinct_labels"]) for r in table] == [
+        ("Lincoln Elementary", "Person", "Place", 2),
+        ("Muir Elementary", "Person", "Person", 1),
+    ]
+
+    bench.write_results(tmp_path, result, [{"table": "t", "rows": 1, "bytes": 1}], {}, None)
+    stability = json.loads((tmp_path / "run_info.json").read_text(encoding="utf-8"))
+    assert stability["ai_label_stability"]["classify_name_origin"] == {
+        "schools": 2,
+        "same_label_in_every_rep": 1,
+        "repetitions": 2,
+    }
+    assert (tmp_path / "classify_name_origin_labels.csv").exists()
