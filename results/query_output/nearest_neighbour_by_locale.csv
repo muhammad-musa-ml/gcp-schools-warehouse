@@ -1,0 +1,5 @@
+locale_group,schools,median_km,max_km
+Town,381,0.61,16.3
+City,569,0.69,4.2
+Suburb,375,0.92,4.9
+Rural,907,2.44,35.2
