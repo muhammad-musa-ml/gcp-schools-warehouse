@@ -190,3 +190,17 @@ def test_summary_command_needs_no_project(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(cli.summary, "build", lambda results: "# text\n")
     assert cli.main(["summary", "--results", str(tmp_path)]) == 0
     assert (tmp_path / "summary.md").read_text(encoding="utf-8") == "# text\n"
+
+
+def test_queries_can_save_each_result_as_csv(configured, monkeypatch, tmp_path):
+    monkeypatch.setattr(cli, "_client", lambda stack: None)
+    stats = cli.queries.RunStats("q", 1, 0.1, 0.1, 1, 10485760, 5, False, 2, "job")
+    monkeypatch.setattr(cli.queries, "run", lambda *a, **k: ([{"n": 1}, {"n": 2}], stats))
+    monkeypatch.setattr(cli.report, "save_query_run", lambda *a, **k: None)
+    out = tmp_path / "saved"
+    assert cli.main(["queries", "--name", "schools_per_county", "--save-dir", str(out)]) == 0
+    assert (out / "schools_per_county.csv").read_text(encoding="utf-8").splitlines() == [
+        "n",
+        "1",
+        "2",
+    ]

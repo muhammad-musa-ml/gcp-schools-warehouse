@@ -1,3 +1,4 @@
+import csv
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -32,6 +33,17 @@ def _cell(value) -> str:
     if isinstance(value, float):
         return f"{value:g}"
     return str(value)
+
+
+def write_rows_csv(path: Path, rows: list[dict]) -> None:
+    """The full result of a query as CSV; an empty result leaves no file."""
+    if not rows:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0]), lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
 
 
 def save_query_run(name: str, title: str, rows: list[dict], stats: dict) -> None:

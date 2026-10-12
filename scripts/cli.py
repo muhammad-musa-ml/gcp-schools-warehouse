@@ -46,6 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     _query_args(s)
     s.add_argument("--dry-run", action="store_true", help="validate and estimate bytes only")
     s.add_argument("--rows", type=int, default=10, help="rows to print per query")
+    s.add_argument("--save-dir", type=Path, help="also write each full result as CSV here")
 
     s = sub.add_parser("bench", help="repeat each query with the cache off and record the stats")
     _query_args(s)
@@ -141,6 +142,8 @@ def cmd_queries(settings: Settings, args) -> None:
             f"{stats.wall_s:.2f}s"
         )
         report.save_query_run(spec.name, spec.title, rows, asdict(stats))
+        if args.save_dir:
+            report.write_rows_csv(args.save_dir / f"{spec.name}.csv", rows)
 
 
 def cmd_graph(settings: Settings, args) -> None:
@@ -218,7 +221,12 @@ def cmd_all(settings: Settings, args) -> None:
     cmd_queries(
         settings,
         argparse.Namespace(
-            name=None, include_ai=args.include_ai, endpoint=AI_ENDPOINT, dry_run=False, rows=10
+            name=None,
+            include_ai=args.include_ai,
+            endpoint=AI_ENDPOINT,
+            dry_run=False,
+            rows=10,
+            save_dir=None,
         ),
     )
     cmd_report(settings, args)

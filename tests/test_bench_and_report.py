@@ -149,3 +149,14 @@ def test_ai_rows_are_kept_and_compared_across_repetitions(monkeypatch, tmp_path)
         "repetitions": 2,
     }
     assert (tmp_path / "classify_name_origin_labels.csv").exists()
+
+
+def test_write_rows_csv_keeps_every_row_and_skips_empty_results(tmp_path):
+    report.write_rows_csv(tmp_path / "a" / "q.csv", [{"x": 1, "y": "a,b"}, {"x": 2, "y": None}])
+    assert (tmp_path / "a" / "q.csv").read_text(encoding="utf-8").splitlines() == [
+        "x,y",
+        '1,"a,b"',
+        "2,",
+    ]
+    report.write_rows_csv(tmp_path / "empty.csv", [])
+    assert not (tmp_path / "empty.csv").exists()
