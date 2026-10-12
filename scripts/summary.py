@@ -74,6 +74,23 @@ def pipeline_section(results: Path) -> str:
     return table(["stage", "runs", "failed", "seconds, median (min to max)"], body)
 
 
+def dataform_section(results: Path) -> str:
+    rows = _read_csv(results / "dataform_actions.csv")
+    reps = sorted({r["rep"] for r in rows})
+    lines = []
+    for rep in reps:
+        mine = [r for r in rows if r["rep"] == rep]
+        total = sum(int(r["bytes_billed"]) for r in mine)
+        biggest = max(mine, key=lambda r: int(r["bytes_billed"]))
+        bad = sum(1 for r in mine if r["status"] != "ok")
+        lines.append(
+            f"- run {rep}: {len(mine)} actions, {bad} not ok, {total} bytes billed "
+            f"({_fmt(total / MIB)} MiB), largest {biggest['action']} with "
+            f"{_fmt(int(biggest['bytes_billed']) / MIB)} MiB"
+        )
+    return "\n".join(lines)
+
+
 def facts_section(results: Path) -> str:
     facts = json.loads((results / "data_facts.json").read_text(encoding="utf-8"))
     j = facts["county_join"]
@@ -142,6 +159,13 @@ def build(results: Path) -> str:
             "",
             pipeline_section(results),
         ]
+        if (results / "dataform_actions.csv").exists():
+            out += [
+                "",
+                "Dataform runs timed above, from their logs:",
+                "",
+                dataform_section(results),
+            ]
     if (results / "data_facts.json").exists():
         out += ["", "## Data facts", "", facts_section(results)]
     return "\n".join(out) + "\n"

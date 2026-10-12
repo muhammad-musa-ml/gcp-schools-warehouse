@@ -128,3 +128,15 @@ def test_summary_without_the_optional_files_still_builds(tmp_path):
     text = summary.build(tmp_path)
     assert "## Pipeline stages" not in text
     assert "## Data facts" not in text
+
+
+def test_summary_reads_dataform_bytes_per_run(tmp_path):
+    write_results_dir(tmp_path)
+    with open(tmp_path / "dataform_actions.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(["rep", "action", "status", "bytes_billed"])
+        w.writerow([1, "wh.big", "ok", 183 * 2**20])
+        w.writerow([1, "chk.a", "ok", 10 * 2**20])
+        w.writerow([1, "chk.b", "failed", 0])
+    text = summary.build(tmp_path)
+    assert "run 1: 3 actions, 1 not ok, 202375168 bytes billed (193 MiB), largest wh.big" in text
