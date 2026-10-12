@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 8.6"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.14"
+    }
   }
 }
 

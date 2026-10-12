@@ -74,8 +74,22 @@ resource "google_bigquery_connection" "ai" {
   depends_on = [google_project_service.api]
 }
 
+# The connection's service account is created asynchronously, and project IAM refuses a grant
+# to it until it has propagated ("Service account ... does not exist"). I created 21 throwaway
+# connections and retried the grant once a second (results/iam_grant_delay.csv): it was
+# accepted after 0.7 to 5.8 seconds, and the first attempt failed 6 times. 30 seconds is about
+# five times the slowest of those. The sleep only runs when the service account changes, not
+# on later applies.
+resource "time_sleep" "connection_service_account" {
+  create_duration = "30s"
+
+  triggers = {
+    service_account = google_bigquery_connection.ai.cloud_resource[0].service_account_id
+  }
+}
+
 resource "google_project_iam_member" "ai_connection_vertex_user" {
   project = var.project_id
   role    = "roles/aiplatform.user"
-  member  = "serviceAccount:${google_bigquery_connection.ai.cloud_resource[0].service_account_id}"
+  member  = "serviceAccount:${time_sleep.connection_service_account.triggers.service_account}"
 }

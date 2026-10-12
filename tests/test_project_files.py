@@ -85,3 +85,29 @@ def test_built_in_assertions_cover_keys_on_both_tables():
     for table in ("wi_counties", "wi_county_schools"):
         sqlx = read(DEFS / f"{table}.sqlx")
         assert "uniqueKey" in sqlx and "nonNull" in sqlx
+
+
+def test_the_iam_grant_waits_for_the_connection_service_account_to_propagate():
+    main = read(TERRAFORM_DIR / "main.tf")
+    sleep = re.search(r'resource "time_sleep" "(\w+)" \{(.*?)\n\}', main, re.S)
+    grant = re.search(
+        r'resource "google_project_iam_member" "ai_connection_vertex_user" \{(.*?)\n\}', main, re.S
+    )
+    assert sleep and grant
+    assert "google_bigquery_connection.ai" in sleep.group(2)
+    member = re.search(r"member\s*=\s*(.+)", grant.group(1)).group(1)
+    assert f"time_sleep.{sleep.group(1)}" in member
+    assert "google_bigquery_connection" not in member, "that would skip the wait"
+    seconds = int(re.search(r'create_duration\s*=\s*"(\d+)s"', sleep.group(2)).group(1))
+    assert seconds >= 30
+
+
+def test_the_lock_file_pins_every_provider_for_every_platform_we_use():
+    versions = read(TERRAFORM_DIR / "versions.tf")
+    lock = read(TERRAFORM_DIR / ".terraform.lock.hcl")
+    for source in ("hashicorp/google", "hashicorp/time"):
+        assert f'source  = "{source}"' in versions
+        block = re.search(rf'provider "registry.terraform.io/{source}" \{{(.*?)\n\}}', lock, re.S)
+        assert block, source
+        # windows, linux and macOS on amd64 plus linux and macOS on arm64
+        assert len(re.findall(r'"h1:', block.group(1))) >= 5, source
