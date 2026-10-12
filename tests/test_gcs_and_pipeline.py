@@ -30,7 +30,18 @@ def test_upload_reports_size_and_mtime_from_the_store(store, tmp_path):
     assert info.size == 1234
     assert isinstance(info.mtime_ns, int) and info.mtime_ns > 0
     assert files(store) == ["bkt/schools/f.parquet"]
-    assert gcs.list_top_level(store, "bkt") == ["bkt/a", "bkt/b", "bkt/schools"]
+
+
+def test_top_level_listing_shows_prefixes_and_root_files(store, tmp_path):
+    local = tmp_path / "f"
+    local.write_bytes(b"1")
+    assert gcs.list_top_level(store, "bkt") == []
+    gcs.upload_file(store, local, "bkt/b/c/two")
+    gcs.upload_file(store, local, "bkt/a/one")
+    gcs.upload_file(store, local, "bkt/a/another")
+    gcs.upload_file(store, local, "bkt/readme")
+    assert gcs.list_top_level(store, "bkt") == ["a/", "b/", "readme"]
+    assert gcs.list_top_level(store, "bkt/") == ["a/", "b/", "readme"]
 
 
 def test_upload_of_missing_local_file_fails_before_touching_the_store(store, tmp_path):

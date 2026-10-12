@@ -30,8 +30,15 @@ def upload_file(filesystem: fs.FileSystem, local: Path, dest: str) -> ObjectInfo
 
 
 def list_top_level(filesystem: fs.FileSystem, bucket: str) -> list[str]:
-    infos = filesystem.get_file_info(fs.FileSelector(bucket, recursive=False))
-    return sorted(i.path for i in infos)
+    """Names at the root of the bucket; prefixes end in "/". Derived from a full listing
+    because a non-recursive listing of a GCS bucket root skips prefixes."""
+    root = bucket.rstrip("/") + "/"
+    names = set()
+    for info in filesystem.get_file_info(fs.FileSelector(bucket, recursive=True)):
+        if info.type == fs.FileType.File:
+            head, slash, _ = info.path[len(root) :].partition("/")
+            names.add(head + slash)
+    return sorted(names)
 
 
 def empty_bucket(filesystem: fs.FileSystem, bucket: str) -> int:
