@@ -1,0 +1,4 @@
+stage,reps,failed,seconds_median,seconds_min,seconds_max
+ingest,3,0,25.359,25.137,28.047
+transform,3,0,27.991,19.631,77.36
+all,3,0,87.045,82.781,91.376

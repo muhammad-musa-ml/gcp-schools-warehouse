@@ -1,0 +1,10 @@
+Snapshot taken before the measurement runs, UTC 2026-10-12T19:33:24
+cpu: 13th Gen Intel(R) Core(TM) i7-13700HX
+total memory GiB: 29.7, free GiB: 1.4
+cpu busy percent, five samples two seconds apart: 31, 28, 30, 37, 28
+docker containers running (other projects, not mine): 9
+
+Second snapshot after all runs, UTC 2026-10-12T19:44:15
+total memory GiB: 29.7, free GiB: 1.2
+cpu busy percent, five samples two seconds apart: 41, 45, 45, 52, 36
+docker containers running (other projects, not mine): 19

@@ -1,0 +1,41 @@
+{
+  "environment": {
+    "date_utc": "2026-10-12T19:34:52+00:00",
+    "git_commit": "836b8b82260c65f8c134f0a424a39728fd97e745",
+    "git_dirty": false,
+    "bigquery_location": "US",
+    "reps_per_query": 5,
+    "query_cache": "disabled",
+    "ai_endpoint": "gemini-3.5-flash-lite",
+    "client": "google-cloud-bigquery 3.46.1",
+    "machine": {
+      "os": "Windows 11 AMD64",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13700HX",
+      "logical_cpus": 24,
+      "memory_gib": 29.7,
+      "python": "3.13.5"
+    },
+    "note": "wall_s is measured on the client around job submit and result fetch, so it includes the network path from this machine; server_s is the job's own start to end."
+  },
+  "cost_estimate": {
+    "runs": 35,
+    "bytes_billed_total": 419430400,
+    "tib_billed": 0.0003814697265625,
+    "usd_per_tib_list_price": 6.25,
+    "usd_at_list_price": 0.0024,
+    "note": "Analysis cost only, before the monthly 1 TiB free tier. Storage, the Dataform build and AI.CLASSIFY model calls are not included."
+  },
+  "project_usage": {
+    "window_days": 30,
+    "query_jobs": 107,
+    "bytes_billed": 1337982976,
+    "slot_ms": 156300
+  },
+  "ai_label_stability": {
+    "classify_name_origin": {
+      "schools": 30,
+      "same_label_in_every_rep": 28,
+      "repetitions": 5
+    }
+  }
+}

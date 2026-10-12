@@ -1,0 +1,10 @@
+stage,rep,seconds,exit_code
+ingest,1,28.047,0
+transform,1,77.36,0
+all,1,91.376,0
+ingest,2,25.137,0
+transform,2,27.991,0
+all,2,87.045,0
+ingest,3,25.359,0
+transform,3,19.631,0
+all,3,82.781,0

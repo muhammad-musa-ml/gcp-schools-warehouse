@@ -1,0 +1,82 @@
+{
+  "measured_at_utc": "2026-10-12T19:43:23+00:00",
+  "tables": [
+    {
+      "table": "schools_raw.schools",
+      "rows": 2232,
+      "bytes": 506907
+    },
+    {
+      "table": "schools_warehouse.wi_counties",
+      "rows": 72,
+      "bytes": 2543539
+    },
+    {
+      "table": "schools_warehouse.wi_county_schools",
+      "rows": 2232,
+      "bytes": 634420
+    }
+  ],
+  "county_join": {
+    "schools": 2232,
+    "distinct_school_ids": 2232,
+    "matched_to_a_county": 2232,
+    "county_agrees_with_nces": 2232,
+    "counties_with_schools": 72,
+    "counties_total": 72
+  },
+  "assertions": [
+    {
+      "assertion": "assert_county_agrees_with_nces",
+      "violating_rows": 0,
+      "passes": true
+    },
+    {
+      "assertion": "assert_every_school_has_one_county",
+      "violating_rows": 0,
+      "passes": true
+    },
+    {
+      "assertion": "assert_row_counts",
+      "violating_rows": 0,
+      "passes": true
+    },
+    {
+      "assertion": "assert_schools_keys",
+      "violating_rows": 0,
+      "passes": true
+    },
+    {
+      "assertion": "schools_warehouse_wi_counties_assertions_rowConditions",
+      "violating_rows": 0,
+      "passes": true
+    },
+    {
+      "assertion": "schools_warehouse_wi_counties_assertions_uniqueKey_0",
+      "violating_rows": 0,
+      "passes": true
+    },
+    {
+      "assertion": "schools_warehouse_wi_county_schools_assertions_rowConditions",
+      "violating_rows": 0,
+      "passes": true
+    },
+    {
+      "assertion": "schools_warehouse_wi_county_schools_assertions_uniqueKey_0",
+      "violating_rows": 0,
+      "passes": true
+    }
+  ],
+  "ingest": {
+    "source_url": "https://nces.ed.gov/programs/edge/data/EDGE_GEOCODE_PUBLICSCH_2425.zip",
+    "source_zip_sha256": "9dc51ecd5cdf6e38bdb679f7ac95e2bf73ee3fb48718b8612cf830800cffb288",
+    "rows_seen": 102178,
+    "rows_other_states": 99946,
+    "rows_kept": 2232,
+    "rows_rejected": 0,
+    "parquet_bytes": 140913,
+    "uploaded_object": "schools/wi_schools.parquet",
+    "uploaded_size_bytes": 140913,
+    "uploaded_mtime_ns": 1791834131712000000
+  }
+}

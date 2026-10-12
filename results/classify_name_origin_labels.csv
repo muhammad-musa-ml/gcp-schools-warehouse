@@ -1,0 +1,31 @@
+school_name,bare_name,rep1,rep2,rep3,rep4,rep5,distinct_labels
+Cesar Chavez Elementary,Cesar Chavez,Person,Person,Person,Person,Person,1
+Crestwood Elementary,Crestwood,Place,Place,Place,Place,Place,1
+Dr Virginia Henderson Elementary School,Dr Virginia Henderson,Person,Person,Person,Person,Person,1
+Elvehjem Elementary,Elvehjem,Person,Person,Person,Person,Person,1
+Emerson Elementary,Emerson,Person,Person,Person,Person,Person,1
+Franklin Elementary,Franklin,Person,Person,Person,Person,Person,1
+Gompers Elementary,Gompers,Person,Person,Person,Person,Person,1
+Hawthorne Elementary,Hawthorne,Place,Place,Place,Place,Place,1
+Huegel Elementary,Huegel,Other,Person,Other,Other,Place,3
+Kennedy Elementary,Kennedy,Person,Person,Person,Person,Person,1
+Lake View Elementary,Lake View,Place,Place,Place,Place,Place,1
+Lapham Elementary,Lapham,Person,Person,Person,Person,Person,1
+Leopold Elementary,Leopold,Person,Person,Person,Person,Person,1
+Lincoln Elementary,Lincoln,Person,Person,Person,Person,Person,1
+Lindbergh Elementary,Lindbergh,Person,Person,Person,Person,Person,1
+Lowell Elementary,Lowell,Place,Place,Place,Place,Place,1
+Marquette Elementary,Marquette,Person,Person,Person,Person,Person,1
+Mendota Elementary,Mendota,Place,Place,Place,Place,Place,1
+Midvale Elementary,Midvale,Place,Place,Place,Place,Place,1
+Milele Chikasa Anana Elementary School,Milele Chikasa Anana,Person,Person,Person,Person,Person,1
+Muir Elementary,Muir,Person,Person,Other,Person,Person,2
+Orchard Ridge Elementary,Orchard Ridge,Place,Place,Place,Place,Place,1
+Randall Elementary School,Randall,Person,Person,Person,Person,Person,1
+Sandburg Elementary,Sandburg,Person,Person,Person,Person,Person,1
+Schenk Elementary,Schenk,Person,Person,Person,Person,Person,1
+Shorewood Hills Elementary,Shorewood Hills,Place,Place,Place,Place,Place,1
+Southside Elementary School,Southside,Place,Place,Place,Place,Place,1
+Stephens Elementary,Stephens,Person,Person,Person,Person,Person,1
+Thoreau Elementary,Thoreau,Person,Person,Person,Person,Person,1
+Van Hise Elementary,Van Hise,Person,Person,Person,Person,Person,1

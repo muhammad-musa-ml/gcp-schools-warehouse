@@ -1,0 +1,4 @@
+table,rows,bytes
+schools_raw.schools,2232,506907
+schools_warehouse.wi_counties,72,2543539
+schools_warehouse.wi_county_schools,2232,634420

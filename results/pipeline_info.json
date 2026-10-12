@@ -1,0 +1,17 @@
+{
+  "date_utc": "2026-10-12T19:35:08+00:00",
+  "reps_per_stage": 3,
+  "machine": {
+    "os": "Windows 11 AMD64",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13700HX",
+    "logical_cpus": 24,
+    "memory_gib": 29.7,
+    "python": "3.13.5"
+  },
+  "stages": {
+    "ingest": "python -m scripts ingest --refresh",
+    "transform": "python -m scripts transform",
+    "all": "python -m scripts all"
+  },
+  "note": "Each stage runs as its own process, so interpreter, npx and terraform start-up are included. The npx and terraform provider caches were warm. The `all` stage starts with the NCES download deleted and runs terraform apply, ingest, dataform run, the six non-AI queries and the report."
+}
