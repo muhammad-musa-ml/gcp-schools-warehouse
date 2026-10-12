@@ -1,0 +1,58 @@
+[
+  {
+    "name": "schools_per_county",
+    "file": "schools_per_county.sql",
+    "title": "Schools, cities and rural share per county",
+    "params": {}
+  },
+  {
+    "name": "school_density",
+    "file": "school_density.sql",
+    "title": "Schools per 100 square km of land, by county",
+    "params": {}
+  },
+  {
+    "name": "cities_with_many_schools",
+    "file": "cities_with_many_schools.sql",
+    "title": "Counties with several cities that each have many schools",
+    "params": {
+      "min_schools": ["INT64", 3],
+      "min_cities": ["INT64", 2]
+    }
+  },
+  {
+    "name": "nearest_schools",
+    "file": "nearest_schools.sql",
+    "title": "Ten schools closest to the State Capitol in Madison",
+    "params": {
+      "lat": ["FLOAT64", 43.0747],
+      "lon": ["FLOAT64", -89.3842],
+      "limit": ["INT64", 10]
+    }
+  },
+  {
+    "name": "nearest_neighbour_by_locale",
+    "file": "nearest_neighbour_by_locale.sql",
+    "title": "Distance to the closest other school, by locale group",
+    "params": {}
+  },
+  {
+    "name": "schools_within_radius",
+    "file": "schools_within_radius.sql",
+    "title": "Schools within 10 km of the State Capitol, by city",
+    "params": {
+      "lat": ["FLOAT64", 43.0747],
+      "lon": ["FLOAT64", -89.3842],
+      "radius_km": ["FLOAT64", 10.0]
+    }
+  },
+  {
+    "name": "classify_name_origin",
+    "file": "classify_name_origin.sql",
+    "title": "Madison elementary schools named after a person, a place or other",
+    "params": {
+      "city": ["STRING", "Madison"]
+    },
+    "ai": true
+  }
+]
