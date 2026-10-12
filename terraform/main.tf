@@ -53,6 +53,16 @@ resource "google_bigquery_dataset" "warehouse" {
   depends_on = [google_project_service.api]
 }
 
+resource "google_bigquery_dataset" "assertions" {
+  dataset_id = var.assertions_dataset
+  location   = var.location
+  labels     = var.labels
+
+  delete_contents_on_destroy = true
+
+  depends_on = [google_project_service.api]
+}
+
 # AI.CLASSIFY calls Vertex AI through this connection's service account.
 resource "google_bigquery_connection" "ai" {
   connection_id = var.ai_connection_id

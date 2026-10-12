@@ -18,6 +18,10 @@ output "warehouse_dataset" {
   value = google_bigquery_dataset.warehouse.dataset_id
 }
 
+output "assertions_dataset" {
+  value = google_bigquery_dataset.assertions.dataset_id
+}
+
 # project.location.id, the form AI.CLASSIFY wants in connection_id
 output "ai_connection" {
   value = "${var.project_id}.${var.location}.${google_bigquery_connection.ai.connection_id}"

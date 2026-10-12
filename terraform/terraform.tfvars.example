@@ -1,8 +1,9 @@
 project_id = "your-gcp-project-id"
 
 # Everything below is optional.
-# location          = "US"
-# bucket_name       = "my-unique-bucket-name"
-# raw_dataset       = "schools_raw"
-# warehouse_dataset = "schools_warehouse"
-# ai_connection_id  = "schools-ai"
+# location           = "US"
+# bucket_name        = "my-unique-bucket-name"
+# raw_dataset        = "schools_raw"
+# warehouse_dataset  = "schools_warehouse"
+# assertions_dataset = "schools_assertions"
+# ai_connection_id   = "schools-ai"

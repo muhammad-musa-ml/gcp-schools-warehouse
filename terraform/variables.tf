@@ -33,6 +33,12 @@ variable "warehouse_dataset" {
   default     = "schools_warehouse"
 }
 
+variable "assertions_dataset" {
+  description = "BigQuery dataset where Dataform keeps its assertion views."
+  type        = string
+  default     = "schools_assertions"
+}
+
 variable "ai_connection_id" {
   description = "Id of the BigQuery connection that AI.CLASSIFY calls Vertex AI through."
   type        = string
