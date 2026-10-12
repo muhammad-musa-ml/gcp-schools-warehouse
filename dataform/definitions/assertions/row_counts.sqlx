@@ -1,0 +1,18 @@
+config {
+  type: "assertion",
+  name: "assert_row_counts",
+  description: "Wisconsin has 72 counties, the school table is not truncated, and the join neither drops nor repeats schools."
+}
+
+WITH counts AS (
+  SELECT
+    (SELECT COUNT(*) FROM ${ref("wi_counties")}) AS counties,
+    (SELECT COUNT(*) FROM ${ref("schools")}) AS schools,
+    (SELECT COUNT(*) FROM ${ref("wi_county_schools")}) AS joined
+)
+
+SELECT 'wi_counties should have 72 rows' AS problem, counties AS actual FROM counts WHERE counties != 72
+UNION ALL
+SELECT 'schools should have well over 2000 rows', schools FROM counts WHERE schools < 2000
+UNION ALL
+SELECT 'wi_county_schools should have one row per school', joined FROM counts WHERE joined != schools

@@ -1,0 +1,11 @@
+config {
+  type: "assertion",
+  name: "assert_county_agrees_with_nces",
+  description: "The county found by the polygon join matches the county NCES lists. A few points near a border can differ; more than half a percent means coordinates or boundaries are off."
+}
+
+SELECT
+  COUNTIF(NOT county_matches_nces) AS disagreeing,
+  COUNT(*) AS schools
+FROM ${ref("wi_county_schools")}
+HAVING COUNTIF(NOT county_matches_nces) / COUNT(*) > 0.005

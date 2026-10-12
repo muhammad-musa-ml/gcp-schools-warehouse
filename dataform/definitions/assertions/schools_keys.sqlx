@@ -1,0 +1,16 @@
+config {
+  type: "assertion",
+  name: "assert_schools_keys",
+  description: "Every loaded school has an id, a name and coordinates, and no id repeats."
+}
+
+SELECT 'missing value' AS problem, ncessch
+FROM ${ref("schools")}
+WHERE ncessch IS NULL OR school_name IS NULL OR latitude IS NULL OR longitude IS NULL
+
+UNION ALL
+
+SELECT 'duplicate id' AS problem, ncessch
+FROM ${ref("schools")}
+GROUP BY ncessch
+HAVING COUNT(*) > 1

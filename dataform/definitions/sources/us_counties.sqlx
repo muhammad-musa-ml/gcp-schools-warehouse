@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "bigquery-public-data",
+  schema: "geo_us_boundaries",
+  name: "counties",
+  description: "US county polygons from the Census TIGER data in BigQuery's public datasets."
+}

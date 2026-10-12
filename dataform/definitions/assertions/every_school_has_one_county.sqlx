@@ -1,0 +1,13 @@
+config {
+  type: "assertion",
+  name: "assert_every_school_has_one_county",
+  description: "The geographic join gives each school exactly one county."
+}
+
+SELECT
+  ncessch,
+  COUNT(*) AS rows_for_school,
+  COUNTIF(county_geo_id IS NOT NULL) AS counties
+FROM ${ref("wi_county_schools")}
+GROUP BY ncessch
+HAVING rows_for_school != 1 OR counties != 1

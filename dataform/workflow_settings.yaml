@@ -1,0 +1,12 @@
+# The values below are placeholders so the project compiles on a machine with no
+# credentials (CI does this). scripts/ passes the real ones with --default-database,
+# --default-location and --vars, taken from the terraform outputs.
+dataformCoreVersion: 3.0.71
+defaultProject: your-gcp-project-id
+defaultLocation: US
+defaultDataset: schools_warehouse
+defaultAssertionDataset: schools_assertions
+vars:
+  raw_dataset: schools_raw
+  raw_bucket: your-gcp-project-id-schools-raw
+  schools_object: schools/wi_schools.parquet

@@ -1,0 +1,34 @@
+config {
+  type: "table",
+  name: "wi_county_schools",
+  description: "Schools with a point location and the county polygon that contains it.",
+  columns: {
+    ncessch: "NCES school id",
+    location: "Point built from the school's latitude and longitude",
+    county_geo_id: "FIPS code of the county polygon that contains the point",
+    county_name: "Name of that county",
+    county_matches_nces: "True when the polygon county is the county NCES lists for the school"
+  },
+  assertions: {
+    uniqueKey: ["ncessch"],
+    nonNull: ["ncessch", "school_name", "location", "county_geo_id", "county_name"]
+  }
+}
+
+-- LEFT JOIN on purpose: a point that lands in no county (or in two) must show up as a
+-- null (or a repeated id) for the assertions to catch, not vanish in an inner join.
+WITH located AS (
+  SELECT
+    s.*,
+    ST_GEOGPOINT(s.longitude, s.latitude) AS location
+  FROM ${ref("schools")} AS s
+)
+
+SELECT
+  l.*,
+  c.geo_id AS county_geo_id,
+  c.county_name AS county_name,
+  l.county_fips = c.geo_id AS county_matches_nces
+FROM located AS l
+LEFT JOIN ${ref("wi_counties")} AS c
+  ON ST_CONTAINS(c.county_geom, l.location)

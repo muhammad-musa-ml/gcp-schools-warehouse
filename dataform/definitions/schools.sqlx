@@ -1,0 +1,15 @@
+config {
+  type: "operations",
+  hasOutput: true,
+  schema: dataform.projectConfig.vars.raw_dataset,
+  name: "schools",
+  description: "Wisconsin public schools as uploaded by the ingest step, one row per NCES school id."
+}
+
+-- A load job returns no rows, so Dataform cannot infer the output table; hasOutput
+-- tells it that the table exists afterwards and other actions may ref() it.
+LOAD DATA OVERWRITE ${self()}
+FROM FILES (
+  format = 'PARQUET',
+  uris = ['gs://${dataform.projectConfig.vars.raw_bucket}/${dataform.projectConfig.vars.schools_object}']
+)

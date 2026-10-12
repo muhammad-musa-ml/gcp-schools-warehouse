@@ -1,0 +1,26 @@
+config {
+  type: "table",
+  name: "wi_counties",
+  description: "The 72 Wisconsin counties with their boundary polygons.",
+  columns: {
+    geo_id: "Five digit county FIPS code (state + county), the same shape as NCES CNTY",
+    county_name: "County name without the word County",
+    county_geom: "County boundary"
+  },
+  assertions: {
+    uniqueKey: ["geo_id"],
+    nonNull: ["geo_id", "county_name", "county_geom"]
+  }
+}
+
+SELECT
+  geo_id,
+  state_fips_code,
+  county_fips_code,
+  county_name,
+  area_land_meters,
+  area_water_meters,
+  int_point_geom,
+  county_geom
+FROM ${ref("counties")}
+WHERE state_fips_code = '55'
